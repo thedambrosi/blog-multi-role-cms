@@ -43,3 +43,21 @@ test('colaborador não consegue gerar convite pelo componente', function () {
 
     Livewire::test('invite-create-form')->assertStatus(403);
 });
+
+test('rate limiting bloqueia a geração de convites após muitas tentativas', function () {
+    $admin = User::factory()->admin()->create();
+    actingAs($admin);
+
+    foreach (range(1, 20) as $attempt) {
+        Livewire::test('invite-create-form')
+            ->set('email', "convidado{$attempt}@exemplo.com")
+            ->call('create');
+    }
+
+    Livewire::test('invite-create-form')
+        ->set('email', 'mais-um@exemplo.com')
+        ->call('create')
+        ->assertHasErrors(['email']);
+
+    expect(Invite::count())->toBe(20);
+});

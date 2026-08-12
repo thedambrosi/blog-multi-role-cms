@@ -76,3 +76,24 @@ test('convite já usado não permite criar um novo usuário', function () {
 
     expect(User::where('role', 'colaborador')->count())->toBe(0);
 });
+
+test('rate limiting bloqueia o cadastro por convite após muitas tentativas', function () {
+    $invite = Invite::factory()->create();
+
+    foreach (range(1, 10) as $attempt) {
+        Livewire::test('invite-registration-form', ['token' => $invite->token])
+            ->set('name', 'Fulano')
+            ->set('password', 'senha1234')
+            ->set('password_confirmation', 'senha-diferente')
+            ->call('register');
+    }
+
+    Livewire::test('invite-registration-form', ['token' => $invite->token])
+        ->set('name', 'Fulano')
+        ->set('password', 'senha1234')
+        ->set('password_confirmation', 'senha-diferente')
+        ->call('register')
+        ->assertHasErrors(['name']);
+
+    expect(User::where('role', 'colaborador')->count())->toBe(0);
+});
