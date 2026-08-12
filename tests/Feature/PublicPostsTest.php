@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Post;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 use function Pest\Laravel\get;
@@ -65,4 +66,18 @@ test('post em rascunho retorna 404 na página pública', function () {
 
 test('slug inexistente retorna 404', function () {
     get('/posts/slug-que-nao-existe')->assertNotFound();
+});
+
+test('posts de um colaborador com acesso removido continuam visíveis com o nome dele', function () {
+    $removed = User::factory()->removed()->create(['name' => 'Ex-Colaborador']);
+    $post = Post::factory()->for($removed)->published()->create(['title' => 'Post antigo do ex-colaborador']);
+
+    get('/')
+        ->assertOk()
+        ->assertSee('Post antigo do ex-colaborador')
+        ->assertSee('Ex-Colaborador');
+
+    get(route('posts.show', $post->slug))
+        ->assertOk()
+        ->assertSee('Ex-Colaborador');
 });
