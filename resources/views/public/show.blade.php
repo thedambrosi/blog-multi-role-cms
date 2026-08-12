@@ -1,18 +1,35 @@
 <x-layouts.public :title="$post->title">
     <article>
-        @if ($post->imageUrl())
-        <img src="{{ $post->imageUrl() }}" alt="" class="w-full rounded-md object-cover">
-        @endif
+        <a href="{{ route('home') }}" class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900">
+            <x-heroicon-m-arrow-left class="h-4 w-4" />
+            Voltar
+        </a>
 
-        <h1 class="mt-6 text-2xl font-semibold text-gray-900">{{ $post->title }}</h1>
-        <p class="mt-2 text-sm text-gray-500">
-            {{ $post->user->name }} · {{ $post->published_at->format('d/m/Y') }}
+        <h1 class="mt-6 text-3xl font-semibold tracking-tight text-gray-900 sm:text-4xl">{{ $post->title }}</h1>
+
+        <p class="mt-4 flex items-center gap-1.5 text-sm text-gray-500">
+            <x-heroicon-m-user class="h-4 w-4" />
+            <span>{{ $post->user->name }}</span>
+            <span>&middot;</span>
+            <x-heroicon-m-calendar class="h-4 w-4" />
+            <span>{{ $post->published_at->format('d/m/Y') }}</span>
         </p>
 
-        <div class="mt-6 whitespace-pre-line text-gray-800">{{ $post->content }}</div>
+        @if ($post->imageUrl())
+        <img src="{{ $post->imageUrl() }}" alt="" class="mt-8 w-full rounded-xl object-cover">
+        @endif
 
-        <a href="{{ route('home') }}" class="mt-10 inline-block text-sm text-gray-500 hover:text-gray-900">
-            &larr; Voltar
+        <div class="mt-8 max-w-none text-[17px] leading-relaxed text-gray-800">
+            @foreach (explode("\n\n", trim($post->content)) as $paragraph)
+            @continue(trim($paragraph) === '')
+            <p class="mb-5 whitespace-pre-line">{{ trim($paragraph) }}</p>
+            @endforeach
+        </div>
+
+        <a href="{{ route('home') }}"
+            class="mt-10 inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700">
+            <x-heroicon-m-arrow-left class="h-4 w-4" />
+            Ver todos os posts
         </a>
     </article>
 </x-layouts.public>
