@@ -2,6 +2,7 @@
 
 use App\Models\Invite;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Livewire\Component;
 
@@ -23,12 +24,25 @@ new class extends Component {
             'email' => ['required', 'string', 'email'],
         ]);
 
-        $invite = Invite::create([
+        $throttleKey = 'invite-create:'.Auth::id();
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 20)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+
+            $this->addError('email', "Muitos convites gerados. Tente novamente em {$seconds} segundos.");
+
+            return;
+        }
+
+        RateLimiter::hit($throttleKey, 60);
+
+        $invite = new Invite([
             'token' => Str::random(40),
             'email' => $this->email,
             'expires_at' => now()->addHours(48),
-            'created_by' => Auth::id(),
         ]);
+        $invite->created_by = Auth::id();
+        $invite->save();
 
         $this->inviteUrl = url("/convite/{$invite->token}");
         $this->email = '';

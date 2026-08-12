@@ -10,7 +10,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [PostController::class, 'index'])->name('home');
 Route::get('/posts/{slug}', [PostController::class, 'show'])->name('posts.show');
 
-Route::get('/convite/{token}', [InviteController::class, 'show'])->name('invite.show');
+Route::get('/convite/{token}', [InviteController::class, 'show'])
+    ->middleware('throttle:30,1')
+    ->name('invite.show');
 
 Route::prefix('painel')->group(function () {
     Route::get('/login', [AuthController::class, 'create'])

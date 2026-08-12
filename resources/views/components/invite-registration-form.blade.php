@@ -3,6 +3,7 @@
 use App\Models\Invite;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 
@@ -23,6 +24,18 @@ new class extends Component {
 
     public function register(): void
     {
+        $throttleKey = 'invite-register:'.request()->ip();
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 10)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+
+            $this->addError('name', "Muitas tentativas. Tente novamente em {$seconds} segundos.");
+
+            return;
+        }
+
+        RateLimiter::hit($throttleKey, 300);
+
         $invite = Invite::where('token', $this->token)->first();
 
         abort_if(! $invite || $invite->isExpired() || $invite->isUsed(), 404);
