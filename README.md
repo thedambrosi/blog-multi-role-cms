@@ -24,21 +24,21 @@ Blog corporativo com publicação restrita a uma equipe controlada por convite: 
 
 ### Site público
 
-<!-- screenshot: home -->
-<!-- salve em docs/screenshots/home.png -->
+![Página inicial do blog](docs/screenshots/home.png)
 
-<!-- screenshot: post individual -->
-<!-- salve em docs/screenshots/post.png -->
+### Login
+
+![Tela de login](docs/screenshots/login.png)
 
 ### Painel do colaborador
 
-<!-- screenshot: painel -->
-<!-- salve em docs/screenshots/painel.png -->
+![Painel do colaborador](docs/screenshots/colaborador.png)
 
-### Admin (usuários e convites)
+![Listagem de posts do colaborador](docs/screenshots/post.png)
 
-<!-- screenshot: admin -->
-<!-- salve em docs/screenshots/admin.png -->
+### Admin
+
+![Painel do admin](docs/screenshots/admin.png)
 
 ## Decisões técnicas
 
