@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\InviteController;
+use App\Models\Post;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -23,11 +25,35 @@ Route::prefix('painel')->group(function () {
         ->middleware('auth')
         ->name('logout');
 
-    Route::view('/', 'painel')
-        ->middleware(['auth', 'role:admin,colaborador'])
-        ->name('painel');
+    Route::middleware(['auth', 'role:admin,colaborador'])->group(function () {
+        Route::view('/', 'painel')->name('painel');
+
+        Route::get('/posts', fn () => view('posts.index', ['scope' => 'own']))
+            ->name('painel.posts.index');
+
+        Route::get('/posts/create', fn () => view('posts.form', ['scope' => 'own', 'post' => null]))
+            ->name('painel.posts.create');
+
+        Route::get('/posts/{post}/edit', function (Post $post) {
+            Gate::authorize('update', $post);
+
+            return view('posts.form', ['scope' => 'own', 'post' => $post]);
+        })->name('painel.posts.edit');
+    });
 });
 
-Route::view('/admin', 'admin')
-    ->middleware(['auth', 'role:admin'])
-    ->name('admin');
+Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
+    Route::view('/', 'admin')->name('admin');
+
+    Route::get('/posts', fn () => view('posts.index', ['scope' => 'all']))
+        ->name('admin.posts.index');
+
+    Route::get('/posts/create', fn () => view('posts.form', ['scope' => 'all', 'post' => null]))
+        ->name('admin.posts.create');
+
+    Route::get('/posts/{post}/edit', function (Post $post) {
+        Gate::authorize('update', $post);
+
+        return view('posts.form', ['scope' => 'all', 'post' => $post]);
+    })->name('admin.posts.edit');
+});
