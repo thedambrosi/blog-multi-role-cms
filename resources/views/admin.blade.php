@@ -6,6 +6,9 @@
             <a href="{{ route('admin.posts.index') }}" class="mt-6 inline-block text-sm font-medium text-gray-900 underline">
                 Ver todos os posts
             </a>
+            <a href="{{ route('admin.users.index') }}" class="mt-2 block text-sm font-medium text-gray-900 underline">
+                Gerenciar usuários
+            </a>
         </div>
     </div>
 </x-layouts.app>

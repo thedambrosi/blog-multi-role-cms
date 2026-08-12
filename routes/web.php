@@ -56,4 +56,8 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
 
         return view('posts.form', ['scope' => 'all', 'post' => $post]);
     })->name('admin.posts.edit');
+
+    Route::view('/users', 'admin.users')->name('admin.users.index');
+
+    Route::view('/invites/create', 'admin.invites.create')->name('admin.invites.create');
 });
