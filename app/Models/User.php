@@ -23,6 +23,11 @@ class User extends Authenticatable
         return $this->hasMany(Invite::class, 'created_by');
     }
 
+    public function posts(): HasMany
+    {
+        return $this->hasMany(Post::class);
+    }
+
     public function homeRouteName(): string
     {
         return $this->role === 'admin' ? 'admin' : 'painel';
