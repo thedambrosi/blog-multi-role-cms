@@ -1,58 +1,98 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Blog
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Blog corporativo com publicação restrita a uma equipe controlada por convite: um administrador convida colaboradores, cada um escreve e gerencia os próprios posts, e o público em geral só enxerga o que foi publicado — sem cadastro aberto, sem rascunho vazando, sem área administrativa visível.
 
-## About Laravel
+## Funcionalidades
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Site público** — listagem paginada de posts publicados (mais recente primeiro), página individual por post, nada de rascunho aparece nem por acaso
+- **Convites com validade** — admin gera um link de convite (token aleatório, expira em 48h, uso único); quem recebe o link define nome e senha e já entra logado
+- **Papéis (admin / colaborador)** — middleware de role + Policies controlam quem pode editar/excluir o quê; colaborador só mexe nos próprios posts, admin mexe em tudo
+- **CRUD de posts** — criação e edição via Livewire, upload de imagem (com validação real de tipo e tamanho), publicar/despublicar, exclusão, slug gerado automaticamente a partir do título
+- **Gestão de usuários** — admin lista todos os usuários, convida novos colaboradores, remove acesso de alguém sem apagar o histórico de posts dessa pessoa
+- **Autenticação própria** — login por email/senha em rota escondida (sem link público), rate limiting, sessão invalidada no logout
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Tecnologias
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **Laravel 13** — framework, com PHP 8.4
+- **Livewire 4** — Single File Components para toda a parte interativa (formulários, listagens com ações)
+- **Tailwind CSS 4** — estilização
+- **MySQL** — persistência
+- **Pest** — testes automatizados (61 testes)
+- **Herd** — ambiente local
 
-## Learning Laravel
+## Telas
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Site público
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+<!-- screenshot: home -->
+<!-- salve em docs/screenshots/home.png -->
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+<!-- screenshot: post individual -->
+<!-- salve em docs/screenshots/post.png -->
 
-## Agentic Development
+### Painel do colaborador
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+<!-- screenshot: painel -->
+<!-- salve em docs/screenshots/painel.png -->
+
+### Admin (usuários e convites)
+
+<!-- screenshot: admin -->
+<!-- salve em docs/screenshots/admin.png -->
+
+## Decisões técnicas
+
+**Cadastro só por convite, nunca aberto.** Isso não é uma rede social — é o blog de uma equipe, e quem decide quem escreve é o admin. Cada convite é um token aleatório de 40 caracteres, expira em 48h e só pode ser usado uma vez. Não existe (e nunca existiu) uma tela pública de "criar conta".
+
+**Rota de login escondida, sem link em lugar nenhum do site.** Um leitor comum do blog nunca precisa logar. Colocar um botão "Entrar" visível no site público só serve pra indicar pra quem está procurando onde fica a porta de entrada da área administrativa. A rota (`/painel/login`) existe e funciona normalmente pra quem já sabe o caminho — só não é anunciada.
+
+**`is_active` em vez de soft delete pra remover acesso.** Quando o acesso de um colaborador é removido, os posts dele continuam existindo no site público com o nome dele como autor. Soft delete (`deleted_at`) aplicaria um global scope que esconderia o usuário de qualquer relação carregada por padrão, complicando a exibição do autor à toa. Uma coluna booleana resolve exatamente o problema pedido — bloquear login — sem mexer em mais nada.
+
+**Rate limiting em toda ação sensível, não só no login.** Os três pontos onde alguém de fora (ou uma sessão comprometida) conseguiria abusar de uma ação repetidamente são: login, geração de convite e cadastro via convite. Os três usam o `RateLimiter` nativo do Laravel, cada um com uma janela proporcional ao risco (login e cadastro por convite são os mais expostos, por serem acessíveis sem autenticação).
+
+**Policy checada na rota e dentro do componente Livewire.** Um componente Livewire mantém estado entre requisições — o middleware de role da rota garante que só admin/colaborador autenticado chega até a página, mas não sabe decidir "esse colaborador pode editar *este* post específico?". Por isso toda ação que muda dado (`save`, `delete`, `togglePublish`, `removeAccess`) revalida a Policy internamente, além da checagem já feita na rota.
+
+## Como rodar localmente
+
+Requisitos: PHP 8.3+, Composer, Node 20+, MySQL (ou MariaDB).
 
 ```bash
-composer require laravel/boost --dev
+git clone <url-do-repositorio> blog
+cd blog
 
-php artisan boost:install
+composer install
+npm install
+
+cp .env.example .env
+php artisan key:generate
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Configure no `.env` as credenciais do banco (`DB_DATABASE=blog` por padrão) e depois:
 
-## Contributing
+```bash
+php artisan migrate
+php artisan storage:link
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+npm run build
+php artisan serve
+```
 
-## Code of Conduct
+A aplicação fica disponível em `http://localhost:8000` (ou no domínio configurado, se estiver usando [Herd](https://herd.laravel.com)).
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Não existe seeder de admin — crie o primeiro usuário administrador manualmente:
 
-## Security Vulnerabilities
+```bash
+php artisan tinker --execute="App\Models\User::factory()->admin()->create(['name' => 'Admin', 'email' => 'admin@example.com', 'password' => 'sua-senha']);"
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+A partir daí, todo novo colaborador entra pela tela **Convidar colaborador** dentro de `/admin`.
 
-## License
+## Testes
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+php artisan test
+```
+
+## Licença
+
+MIT
