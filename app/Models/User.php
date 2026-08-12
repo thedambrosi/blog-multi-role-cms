@@ -23,6 +23,11 @@ class User extends Authenticatable
         return $this->hasMany(Invite::class, 'created_by');
     }
 
+    public function homeRouteName(): string
+    {
+        return $this->role === 'admin' ? 'admin' : 'painel';
+    }
+
     /**
      * Get the attributes that should be cast.
      *
