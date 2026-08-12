@@ -1,5 +1,5 @@
-<x-layouts.app title="Criar conta">
-    <div class="mx-auto flex h-full min-h-screen max-w-sm flex-col justify-center px-6">
+<x-layouts.guest title="Criar conta">
+    <div class="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
         <livewire:invite-registration-form :token="$token" />
     </div>
-</x-layouts.app>
+</x-layouts.guest>
