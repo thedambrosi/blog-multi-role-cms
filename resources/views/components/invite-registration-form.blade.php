@@ -44,7 +44,7 @@ new class extends Component {
 
         session()->regenerate();
 
-        $this->redirect(route('painel'));
+        $this->redirect(route($user->homeRouteName()));
     }
 }; ?>
 
