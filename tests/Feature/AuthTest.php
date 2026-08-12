@@ -61,6 +61,17 @@ test('rate limiting bloqueia o login após 5 tentativas erradas com o mesmo emai
     ])->assertStatus(429);
 });
 
+test('usuário com acesso removido não consegue logar mesmo com a senha certa', function () {
+    $user = User::factory()->removed()->create(['password' => 'senha1234']);
+
+    post(route('login.store'), [
+        'email' => $user->email,
+        'password' => 'senha1234',
+    ])->assertSessionHasErrors('email');
+
+    expect(auth()->check())->toBeFalse();
+});
+
 test('usuário autenticado consegue fazer logout', function () {
     $user = User::factory()->create();
 
