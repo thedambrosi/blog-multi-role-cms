@@ -9,20 +9,14 @@ class PostController extends Controller
 {
     public function index(): View
     {
-        $posts = Post::query()
-            ->published()
-            ->with('user')
-            ->latest('published_at')
-            ->paginate(12);
-
-        return view('public.index', ['posts' => $posts]);
+        return view('public.index');
     }
 
     public function show(string $slug): View
     {
         $post = Post::query()
             ->published()
-            ->with('user')
+            ->with(['user', 'categories'])
             ->where('slug', $slug)
             ->firstOrFail();
 

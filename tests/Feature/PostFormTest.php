@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Category;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -10,6 +11,41 @@ use function Pest\Laravel\actingAs;
 
 beforeEach(function () {
     Storage::fake('public');
+});
+
+test('categorias selecionadas são associadas ao criar um post', function () {
+    $user = User::factory()->create();
+    $category = Category::factory()->create(['name' => 'Tutoriais']);
+    actingAs($user);
+
+    Livewire::test('post-form', ['scope' => 'own'])
+        ->set('title', 'Post com categoria')
+        ->set('content', 'Conteúdo.')
+        ->set('categories', [$category->id])
+        ->call('save');
+
+    $post = Post::first();
+
+    expect($post->categories->pluck('id')->all())->toBe([$category->id]);
+});
+
+test('editar um post atualiza as categorias associadas', function () {
+    $user = User::factory()->create();
+    $old = Category::factory()->create(['name' => 'Antiga']);
+    $new = Category::factory()->create(['name' => 'Nova']);
+
+    $post = Post::factory()->for($user)->create();
+    $post->categories()->attach($old);
+
+    actingAs($user);
+
+    Livewire::test('post-form', ['post' => $post, 'scope' => 'own'])
+        ->set('title', $post->title)
+        ->set('content', $post->content)
+        ->set('categories', [$new->id])
+        ->call('save');
+
+    expect($post->fresh()->categories->pluck('id')->all())->toBe([$new->id]);
 });
 
 test('colaborador cria um post e o slug é gerado a partir do título', function () {

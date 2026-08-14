@@ -15,6 +15,14 @@
             <span>{{ $post->published_at->format('d/m/Y') }}</span>
         </p>
 
+        @if ($post->categories->isNotEmpty())
+        <div class="mt-4 flex flex-wrap gap-2">
+            @foreach ($post->categories as $category)
+            <span class="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700">{{ $category->name }}</span>
+            @endforeach
+        </div>
+        @endif
+
         @if ($post->imageUrl())
         <img src="{{ $post->imageUrl() }}" alt="" class="mt-8 w-full rounded-xl object-cover">
         @endif

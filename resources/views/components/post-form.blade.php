@@ -1,8 +1,10 @@
 <?php
 
+use App\Models\Category;
 use App\Models\Post;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -22,6 +24,8 @@ new class extends Component {
 
     public $image = null;
 
+    public array $categories = [];
+
     public function mount(?Post $post = null, string $scope = 'own'): void
     {
         $this->scope = $scope;
@@ -32,9 +36,16 @@ new class extends Component {
             $this->post = $post;
             $this->title = $post->title;
             $this->content = $post->content;
+            $this->categories = $post->categories->pluck('id')->map(fn ($id) => (string) $id)->all();
         } else {
             $this->authorize('create', Post::class);
         }
+    }
+
+    #[Computed]
+    public function availableCategories()
+    {
+        return Category::query()->orderBy('name')->get();
     }
 
     public function save(): void
@@ -45,6 +56,8 @@ new class extends Component {
             'title' => ['required', 'string', 'max:255'],
             'content' => ['required', 'string'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'categories' => ['array'],
+            'categories.*' => ['exists:categories,id'],
         ]);
 
         $data = [
@@ -60,6 +73,7 @@ new class extends Component {
             $oldImagePath = $this->post->image_path;
 
             $this->post->update($data);
+            $this->post->categories()->sync($this->categories);
 
             if ($this->image && $oldImagePath) {
                 Storage::disk('public')->delete($oldImagePath);
@@ -68,6 +82,7 @@ new class extends Component {
             $post = new Post($data);
             $post->user_id = Auth::id();
             $post->save();
+            $post->categories()->sync($this->categories);
         }
 
         session()->flash('success', $this->post ? 'Post atualizado com sucesso.' : 'Post criado com sucesso.');
@@ -110,6 +125,21 @@ new class extends Component {
                 {{ $message }}
             </p>
             @enderror
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Categorias</label>
+            <div class="mt-2 flex flex-wrap gap-2">
+                @forelse ($this->availableCategories as $cat)
+                <label class="flex cursor-pointer items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-sm text-gray-600 has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50 has-[:checked]:text-indigo-700">
+                    <input type="checkbox" wire:model="categories" value="{{ $cat->id }}"
+                        class="h-3.5 w-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                    {{ $cat->name }}
+                </label>
+                @empty
+                <p class="text-sm text-gray-400">Nenhuma categoria cadastrada ainda.</p>
+                @endforelse
+            </div>
         </div>
 
         <div>

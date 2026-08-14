@@ -3,6 +3,7 @@
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Livewire\Livewire;
 
 use function Pest\Laravel\get;
 
@@ -23,27 +24,53 @@ test('página inicial ordena os posts do mais recente pro mais antigo', function
     get('/')->assertSeeInOrder(['Post novo', 'Post antigo']);
 });
 
-test('página inicial pagina os posts, 12 por página', function () {
-    Post::factory()->published()->count(13)->create();
+test('os 2 posts mais recentes aparecem em destaque e o restante é paginado no grid, 9 por página', function () {
+    $mostRecent = Post::factory()->create([
+        'title' => 'Post mais recente',
+        'status' => 'published',
+        'published_at' => now(),
+    ]);
 
-    $response = get('/');
+    $secondMostRecent = Post::factory()->create([
+        'title' => 'Post segundo mais recente',
+        'status' => 'published',
+        'published_at' => now()->subHour(),
+    ]);
 
-    $response->assertOk();
-    expect($response->viewData('posts')->count())->toBe(12);
-    expect($response->viewData('posts')->hasMorePages())->toBeTrue();
+    Post::factory()->count(10)->sequence(fn ($sequence) => [
+        'status' => 'published',
+        'published_at' => now()->subDays($sequence->index + 1),
+    ])->create();
+
+    $component = Livewire::test('post-explorer')
+        ->assertSee('Post mais recente')
+        ->assertSee('Post segundo mais recente');
+
+    expect($component->instance()->featured->pluck('id')->all())->toBe([$mostRecent->id, $secondMostRecent->id])
+        ->and($component->instance()->posts->total())->toBe(10)
+        ->and($component->instance()->posts->count())->toBe(9)
+        ->and($component->instance()->posts->hasMorePages())->toBeTrue();
 });
 
-test('listagem usa eager loading para evitar consultas N+1 ao carregar o autor', function () {
+test('listagem usa eager loading para evitar consultas N+1 ao carregar autor e categorias', function () {
     Post::factory()->published()->count(5)->create();
 
     DB::enableQueryLog();
+    Livewire::test('post-explorer');
+    $queriesForFewPosts = collect(DB::getQueryLog())
+        ->filter(fn ($entry) => str_contains($entry['query'], 'from "users"'))
+        ->count();
+    DB::flushQueryLog();
 
-    get('/');
+    Post::factory()->published()->count(20)->create();
 
-    $userQueries = collect(DB::getQueryLog())
-        ->filter(fn ($entry) => str_contains($entry['query'], 'users'));
+    DB::enableQueryLog();
+    Livewire::test('post-explorer');
+    $queriesForManyPosts = collect(DB::getQueryLog())
+        ->filter(fn ($entry) => str_contains($entry['query'], 'from "users"'))
+        ->count();
 
-    expect($userQueries)->toHaveCount(1);
+    expect($queriesForManyPosts)->toBe($queriesForFewPosts);
 });
 
 test('página do post publicado retorna 200 com o conteúdo', function () {
