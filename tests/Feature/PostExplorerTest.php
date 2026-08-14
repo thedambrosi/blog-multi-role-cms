@@ -75,14 +75,18 @@ test('apenas categorias com posts publicados aparecem como filtro', function () 
         ->assertDontSee('Sem Posts');
 });
 
-test('post em destaque não aparece duplicado no grid', function () {
-    $latest = Post::factory()->published()->create(['title' => 'Post mais novo', 'published_at' => now()]);
-    Post::factory()->published()->create(['title' => 'Post antigo', 'published_at' => now()->subDay()]);
+test('posts em destaque não aparecem duplicados no grid', function () {
+    $first = Post::factory()->published()->create(['title' => 'Post mais novo', 'published_at' => now()]);
+    $second = Post::factory()->published()->create(['title' => 'Post segundo mais novo', 'published_at' => now()->subHour()]);
+    $older = Post::factory()->published()->create(['title' => 'Post antigo', 'published_at' => now()->subDay()]);
 
     $component = Livewire::test('post-explorer');
 
-    expect($component->instance()->featured->id)->toBe($latest->id)
-        ->and($component->instance()->posts->pluck('id'))->not->toContain($latest->id);
+    expect($component->instance()->featured)->toHaveCount(2)
+        ->and($component->instance()->featured->pluck('id')->all())->toBe([$first->id, $second->id])
+        ->and($component->instance()->posts->pluck('id'))->not->toContain($first->id)
+        ->and($component->instance()->posts->pluck('id'))->not->toContain($second->id)
+        ->and($component->instance()->posts->pluck('id'))->toContain($older->id);
 });
 
 test('destaque some quando há busca ou filtro ativo', function () {
@@ -92,5 +96,5 @@ test('destaque some quando há busca ou filtro ativo', function () {
         ->set('search', 'novo')
         ->assertDontSee('Destaque');
 
-    expect($component->instance()->featured)->toBeNull();
+    expect($component->instance()->featured)->toHaveCount(0);
 });

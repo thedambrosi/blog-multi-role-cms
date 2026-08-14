@@ -10,6 +10,8 @@ use Livewire\WithPagination;
 new class extends Component {
     use WithPagination;
 
+    const FEATURED_COUNT = 2;
+
     #[Url(as: 'busca', history: true)]
     public string $search = '';
 
@@ -37,17 +39,18 @@ new class extends Component {
     }
 
     #[Computed]
-    public function featured(): ?Post
+    public function featured(): \Illuminate\Support\Collection
     {
         if ($this->search !== '' || $this->category) {
-            return null;
+            return collect();
         }
 
         return Post::query()
             ->published()
             ->with(['user', 'categories'])
             ->latest('published_at')
-            ->first();
+            ->limit(self::FEATURED_COUNT)
+            ->get();
     }
 
     #[Computed]
@@ -56,7 +59,7 @@ new class extends Component {
         return Post::query()
             ->published()
             ->with(['user', 'categories'])
-            ->when($this->featured, fn ($query) => $query->where('id', '!=', $this->featured->id))
+            ->when($this->featured->isNotEmpty(), fn ($query) => $query->whereNotIn('id', $this->featured->pluck('id')))
             ->when($this->search !== '', function ($query) {
                 $query->where(function ($query) {
                     $query->where('title', 'like', "%{$this->search}%")
@@ -93,43 +96,45 @@ new class extends Component {
         @endif
     </div>
 
-    @if ($this->featured)
-    <a href="{{ route('posts.show', $this->featured->slug) }}" wire:key="featured-{{ $this->featured->id }}"
-        class="group grid overflow-hidden rounded-2xl border border-gray-200 transition hover:border-gray-300 hover:shadow-md sm:grid-cols-2">
-        @if ($this->featured->imageUrl())
-        <div class="h-56 sm:h-full">
-            <img src="{{ $this->featured->imageUrl() }}" alt="" class="h-full w-full object-cover">
-        </div>
-        @else
-        <div class="flex h-56 items-center justify-center bg-gray-50 sm:h-full">
-            <x-heroicon-o-photo class="h-10 w-10 text-gray-300" />
-        </div>
-        @endif
-
-        <div class="flex flex-col justify-center p-6 sm:p-8">
-            <span class="inline-flex w-fit items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700">
-                <x-heroicon-m-star class="h-3.5 w-3.5" />
-                Destaque
-            </span>
-
-            @if ($this->featured->categories->isNotEmpty())
-            <p class="mt-3 text-xs font-medium uppercase tracking-wide text-gray-400">
-                {{ $this->featured->categories->pluck('name')->join(' · ') }}
-            </p>
+    @if ($this->featured->isNotEmpty())
+    <div class="grid gap-6 sm:grid-cols-2">
+        @foreach ($this->featured as $post)
+        <a href="{{ route('posts.show', $post->slug) }}" wire:key="featured-{{ $post->id }}"
+            class="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 transition hover:border-gray-300 hover:shadow-md">
+            @if ($post->imageUrl())
+            <img src="{{ $post->imageUrl() }}" alt="" class="h-48 w-full object-cover">
+            @else
+            <div class="flex h-48 items-center justify-center bg-gray-50">
+                <x-heroicon-o-photo class="h-10 w-10 text-gray-300" />
+            </div>
             @endif
 
-            <h2 class="mt-2 text-2xl font-semibold tracking-tight text-gray-900 group-hover:text-indigo-600 sm:text-3xl">
-                {{ $this->featured->title }}
-            </h2>
-            <p class="mt-3 text-sm leading-relaxed text-gray-600">{{ $this->featured->excerpt(180) }}</p>
-            <p class="mt-4 flex items-center gap-1.5 text-xs text-gray-500">
-                <x-heroicon-m-calendar class="h-3.5 w-3.5" />
-                {{ $this->featured->published_at->format('d/m/Y') }}
-                <span>&middot;</span>
-                {{ $this->featured->user->name }}
-            </p>
-        </div>
-    </a>
+            <div class="flex flex-1 flex-col p-6">
+                <span class="inline-flex w-fit items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700">
+                    <x-heroicon-m-star class="h-3.5 w-3.5" />
+                    Destaque
+                </span>
+
+                @if ($post->categories->isNotEmpty())
+                <p class="mt-3 text-xs font-medium uppercase tracking-wide text-gray-400">
+                    {{ $post->categories->pluck('name')->join(' · ') }}
+                </p>
+                @endif
+
+                <h2 class="mt-2 text-xl font-semibold tracking-tight text-gray-900 group-hover:text-indigo-600">
+                    {{ $post->title }}
+                </h2>
+                <p class="mt-3 flex-1 text-sm leading-relaxed text-gray-600">{{ $post->excerpt(140) }}</p>
+                <p class="mt-4 flex items-center gap-1.5 text-xs text-gray-500">
+                    <x-heroicon-m-calendar class="h-3.5 w-3.5" />
+                    {{ $post->published_at->format('d/m/Y') }}
+                    <span>&middot;</span>
+                    {{ $post->user->name }}
+                </p>
+            </div>
+        </a>
+        @endforeach
+    </div>
     @endif
 
     <div>

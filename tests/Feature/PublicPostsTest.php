@@ -24,11 +24,17 @@ test('página inicial ordena os posts do mais recente pro mais antigo', function
     get('/')->assertSeeInOrder(['Post novo', 'Post antigo']);
 });
 
-test('o post mais recente aparece em destaque e o restante é paginado no grid, 9 por página', function () {
-    Post::factory()->create([
+test('os 2 posts mais recentes aparecem em destaque e o restante é paginado no grid, 9 por página', function () {
+    $mostRecent = Post::factory()->create([
         'title' => 'Post mais recente',
         'status' => 'published',
         'published_at' => now(),
+    ]);
+
+    $secondMostRecent = Post::factory()->create([
+        'title' => 'Post segundo mais recente',
+        'status' => 'published',
+        'published_at' => now()->subHour(),
     ]);
 
     Post::factory()->count(10)->sequence(fn ($sequence) => [
@@ -36,9 +42,11 @@ test('o post mais recente aparece em destaque e o restante é paginado no grid, 
         'published_at' => now()->subDays($sequence->index + 1),
     ])->create();
 
-    $component = Livewire::test('post-explorer')->assertSee('Post mais recente');
+    $component = Livewire::test('post-explorer')
+        ->assertSee('Post mais recente')
+        ->assertSee('Post segundo mais recente');
 
-    expect($component->instance()->featured->title)->toBe('Post mais recente')
+    expect($component->instance()->featured->pluck('id')->all())->toBe([$mostRecent->id, $secondMostRecent->id])
         ->and($component->instance()->posts->total())->toBe(10)
         ->and($component->instance()->posts->count())->toBe(9)
         ->and($component->instance()->posts->hasMorePages())->toBeTrue();
