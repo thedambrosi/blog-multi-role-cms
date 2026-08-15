@@ -1,4 +1,4 @@
-<x-layouts.public title="Blog">
+<x-layouts.public title="Blog" description="As últimas publicações, direto ao ponto.">
     <div class="space-y-8">
         <div>
             <h1 class="text-3xl font-semibold tracking-tight text-gray-900">Blog</h1>
