@@ -27,6 +27,10 @@
                         <x-heroicon-m-plus class="h-4 w-4" />
                         Novo Post
                     </a>
+                    <a href="{{ route('admin.comentarios.index') }}" class="flex items-center gap-1.5 hover:text-gray-900 {{ request()->routeIs('admin.comentarios.*') ? 'text-indigo-600' : '' }}">
+                        <x-heroicon-m-chat-bubble-left-right class="h-4 w-4" />
+                        Comentários
+                    </a>
                     <a href="{{ route('admin.users.index') }}" class="flex items-center gap-1.5 hover:text-gray-900 {{ request()->routeIs('admin.users.*') ? 'text-indigo-600' : '' }}">
                         <x-heroicon-m-users class="h-4 w-4" />
                         Usuários
@@ -43,6 +47,10 @@
                     <a href="{{ route('painel.posts.create') }}" class="flex items-center gap-1.5 hover:text-gray-900 {{ request()->routeIs('painel.posts.create') ? 'text-indigo-600' : '' }}">
                         <x-heroicon-m-plus class="h-4 w-4" />
                         Novo Post
+                    </a>
+                    <a href="{{ route('painel.comentarios.index') }}" class="flex items-center gap-1.5 hover:text-gray-900 {{ request()->routeIs('painel.comentarios.*') ? 'text-indigo-600' : '' }}">
+                        <x-heroicon-m-chat-bubble-left-right class="h-4 w-4" />
+                        Comentários
                     </a>
                     @endif
 

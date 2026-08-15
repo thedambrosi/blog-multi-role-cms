@@ -7,8 +7,13 @@ use App\Models\Post;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [PostController::class, 'index'])->name('home');
-Route::get('/posts/{slug}', [PostController::class, 'show'])->name('posts.show');
+Route::get('/', [PostController::class, 'index'])
+    ->middleware('throttle:60,1')
+    ->name('home');
+
+Route::get('/posts/{slug}', [PostController::class, 'show'])
+    ->middleware('throttle:60,1')
+    ->name('posts.show');
 
 Route::get('/convite/{token}', [InviteController::class, 'show'])
     ->middleware('throttle:30,1')
@@ -41,6 +46,9 @@ Route::prefix('painel')->group(function () {
 
             return view('posts.form', ['scope' => 'own', 'post' => $post]);
         })->name('painel.posts.edit');
+
+        Route::get('/comentarios', fn () => view('comments.index', ['scope' => 'own']))
+            ->name('painel.comentarios.index');
     });
 });
 
@@ -58,6 +66,9 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
 
         return view('posts.form', ['scope' => 'all', 'post' => $post]);
     })->name('admin.posts.edit');
+
+    Route::get('/comentarios', fn () => view('comments.index', ['scope' => 'all']))
+        ->name('admin.comentarios.index');
 
     Route::view('/users', 'admin.users')->name('admin.users.index');
 
