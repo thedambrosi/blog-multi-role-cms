@@ -1,4 +1,4 @@
-<x-layouts.public :title="$post->title">
+<x-layouts.public :title="$post->title" :description="$post->excerpt(160)" :image="$post->imageUrl()">
     <article>
         <a href="{{ route('home') }}" class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900">
             <x-heroicon-m-arrow-left class="h-4 w-4" />
@@ -40,4 +40,31 @@
             Ver todos os posts
         </a>
     </article>
+
+    <section class="mt-14 border-t border-gray-200 pt-10">
+        <h2 class="flex items-center gap-2 text-xl font-semibold text-gray-900">
+            <x-heroicon-o-chat-bubble-left-right class="h-5 w-5 text-indigo-600" />
+            Comentários
+        </h2>
+
+        @if ($post->comments->isEmpty())
+        <p class="mt-4 text-sm text-gray-500">Nenhum comentário ainda. Seja o primeiro a comentar.</p>
+        @else
+        <div class="mt-6 space-y-6">
+            @foreach ($post->comments as $comment)
+            <div wire:key="comment-{{ $comment->id }}" class="rounded-xl border border-gray-200 bg-white p-5">
+                <p class="text-sm font-medium text-gray-900">{{ $comment->name }}</p>
+                <p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-gray-700">{{ $comment->body }}</p>
+            </div>
+            @endforeach
+        </div>
+        @endif
+
+        <div class="mt-8">
+            <h3 class="text-sm font-semibold text-gray-900">Deixe seu comentário</h3>
+            <div class="mt-4">
+                <livewire:comment-form :post="$post" />
+            </div>
+        </div>
+    </section>
 </x-layouts.public>

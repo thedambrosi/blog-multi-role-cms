@@ -4,6 +4,9 @@ use App\Models\Category;
 use App\Models\Post;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Intervention\Image\Encoders\WebpEncoder;
+use Intervention\Image\Laravel\Facades\Image;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -66,7 +69,14 @@ new class extends Component {
         ];
 
         if ($this->image) {
-            $data['image_path'] = $this->image->store('posts', 'public');
+            $encoded = Image::decode($this->image)
+                ->scaleDown(width: 1200)
+                ->encode(new WebpEncoder(quality: 80));
+
+            $path = 'posts/' . Str::random(40) . '.webp';
+            Storage::disk('public')->put($path, (string) $encoded);
+
+            $data['image_path'] = $path;
         }
 
         if ($this->post) {

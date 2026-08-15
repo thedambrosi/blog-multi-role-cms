@@ -123,6 +123,30 @@ test('upload de imagem válida é aceito', function () {
     Storage::disk('public')->assertExists($post->image_path);
 });
 
+test('editar post com imagem existente remove a imagem antiga do disco ao enviar uma nova', function () {
+    $user = User::factory()->create();
+    actingAs($user);
+
+    Storage::disk('public')->put('posts/old-image.webp', 'conteudo-antigo');
+
+    $post = Post::factory()->for($user)->create(['image_path' => 'posts/old-image.webp']);
+
+    $newFile = UploadedFile::fake()->image('nova-foto.jpg');
+
+    Livewire::test('post-form', ['post' => $post, 'scope' => 'own'])
+        ->set('title', $post->title)
+        ->set('content', $post->content)
+        ->set('image', $newFile)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $post->refresh();
+
+    expect($post->image_path)->not->toBe('posts/old-image.webp');
+    Storage::disk('public')->assertMissing('posts/old-image.webp');
+    Storage::disk('public')->assertExists($post->image_path);
+});
+
 test('upload de arquivo que não é imagem é rejeitado', function () {
     $user = User::factory()->create();
     actingAs($user);

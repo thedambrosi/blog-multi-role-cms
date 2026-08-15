@@ -1,10 +1,28 @@
 <!DOCTYPE html>
 <html lang="pt-BR" class="h-full">
 
+@php
+    $metaDescription = $description ?? 'As últimas publicações do blog.';
+    $metaTitle = $title ?? 'Blog';
+@endphp
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $title ?? 'Blog' }}</title>
+    <title>{{ $metaTitle }}</title>
+    <meta name="description" content="{{ $metaDescription }}">
+
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{ $metaTitle }}">
+    <meta property="og:description" content="{{ $metaDescription }}">
+    <meta property="og:url" content="{{ url()->current() }}">
+    @if (!empty($image))
+    <meta property="og:image" content="{{ $image }}">
+    @endif
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $metaTitle }}">
+    <meta name="twitter:description" content="{{ $metaDescription }}">
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 

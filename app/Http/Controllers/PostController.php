@@ -16,7 +16,7 @@ class PostController extends Controller
     {
         $post = Post::query()
             ->published()
-            ->with(['user', 'categories'])
+            ->with(['user', 'categories', 'comments' => fn ($query) => $query->approved()->oldest()])
             ->where('slug', $slug)
             ->firstOrFail();
 
